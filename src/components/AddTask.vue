@@ -33,10 +33,13 @@
             </li>
           </ul>
         </div>
-
         <div v-else class="newtask">
           <h1>Task list is empty!!</h1>
         </div>
+         <div v-if="newtask.length > 0" class="btn">
+          <button @click="deleteAll(index)"> Delete all  </button>
+          <button @click="completeAll(index)"> Complete all </button>
+          </div>
       </div>
     </div>
   </div>
@@ -68,7 +71,16 @@ export default {
   },
   compeleteTask(index){
     this.newtask[index].isComplete = !this.newtask[index].isComplete;
-  }
+  },
+   deleteAll() {
+    this.newtask = [];//reset the array
+},
+  completeAll() {
+    const allCompleted = this.newtask.every(task => task.isComplete);
+    this.newtask.forEach(task => {
+        task.isComplete = !allCompleted;
+    });
+},
 }
   
 };
@@ -148,7 +160,7 @@ h1{
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-height: 500px; 
+  max-height: 400px; 
   overflow-y: auto; 
   width: 100%; 
   padding: 10px;
@@ -157,6 +169,7 @@ h1{
 .newtask ul {
   width: 100%;
   padding: 0;
+  margin:0;
   
 }
 
@@ -226,5 +239,21 @@ h1{
 .newtask .completed {
   text-decoration: line-through;
   color: gray;
+}
+.btn button{
+  margin-top: 20px;
+  background: #f58aba;
+  color: white;
+  width: 170px;
+  height: 50px;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: none;
+  margin:5px;
+}
+.btn  button:hover {
+  background: #e64a90;
 }
 </style>
