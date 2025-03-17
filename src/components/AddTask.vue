@@ -1,4 +1,5 @@
 <template>
+
   <div class="taskapp">
     <div class="left">
       <form @submit.prevent="addtask" class="add-task"> 
@@ -18,13 +19,16 @@
           <ul>
             <li v-for="(task, index) in newtask" :key="index">
           
-                <p v-if="!task.isEditing">{{ task.text }}</p>
+                <p v-if="!task.isEditing" :class="{ completed: task.isComplete}">{{ task.text }}</p>
                 <textarea v-else v-model="task.text" />
                  
                 <div class="buttons">
                 <!-- edit task toggle the isEditing mode-->
-                <button @click="editTask(index)">{{ task.isEditing ? 'Save' : 'Edit' }}</button>
-                <button @click="deleteTask(index)">Delete</button>
+               <button @click="editTask(index)">
+               <i :class="task.isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
+              </button>
+                <button @click="deleteTask(index)"> <i class="fas fa-trash"></i> </button>
+                <button @click="compeleteTask(index)"> <i class="fas fa-check"></i> </button>
                 </div>
             </li>
           </ul>
@@ -39,7 +43,9 @@
 </template>
 
 <script>
+
 export default {
+  
   name: "AddTask",
   data() {
     return {
@@ -59,6 +65,9 @@ export default {
   },
   deleteTask(index) {
     this.newtask.splice(index, 1);
+  },
+  compeleteTask(index){
+    this.newtask[index].isComplete = !this.newtask[index].isComplete;
   }
 }
   
@@ -148,10 +157,11 @@ h1{
 .newtask ul {
   width: 100%;
   padding: 0;
+  
 }
 
 .newtask li {
-  list-style: none;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -172,6 +182,8 @@ h1{
   padding: 10px;
   border-radius: 8px;
   height: auto;
+  font-weight: 400px;
+  
 }
 .newtask textarea {
   width: 65%;
@@ -184,7 +196,7 @@ h1{
 }
 
 .newtask p {
-  background: #f9f9f9;
+  background:none;
 }
 
 .newtask textarea {
@@ -200,8 +212,8 @@ h1{
 .newtask button {
   background: #f58aba;
   color: white;
-  width: 90px;
-  height: 40px;
+  width: 50px;
+  height: 30px;
   border: none;
   border-radius: 8px;
   font-size: 16px;
@@ -211,5 +223,8 @@ h1{
 .newtask button:hover {
   background: #e64a90;
 }
-
+.newtask .completed {
+  text-decoration: line-through;
+  color: gray;
+}
 </style>
