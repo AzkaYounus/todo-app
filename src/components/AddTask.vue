@@ -4,9 +4,13 @@
     <div class="left">
       <form @submit.prevent="addtask" class="add-task"> 
         <label> Add Your Task</label>
-        <textarea v-model="text" cols="30" rows="10"></textarea> 
+        <input type="text" v-model="text" placeholder="Add your Task"/>
         <!--<p>{{ text }}</p>-->
-        <button type="submit">Add Task</button> 
+         <button @click="showCalendar = true">Select date</button>
+          <CalenderModel v-if="showCalendar" @close="showCalendar = false" @date="setDate" />
+          <p v-if="selectedDate">Selected Date: {{ selectedDate }}</p>
+         <p v-else>Schedule your Task</p>
+        <button @click="addTask()">Add Task</button>
       </form>
     </div>
 
@@ -18,27 +22,37 @@
         <div v-if="newtask.length > 0" class="newtask">
           <ul>
             <li v-for="(task, index) in newtask" :key="index">
-          
-                <p v-if="!task.isEditing" :class="{ completed: task.isComplete}">{{ task.text }}</p>
-                <textarea v-else v-model="task.text" />
-                 
-                <div class="buttons">
-                <!-- edit task toggle the isEditing mode-->
-               <button @click="editTask(index)">
-               <i :class="task.isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
-              </button>
-                <button @click="deleteTask(index)"> <i class="fas fa-trash"></i> </button>
-                <button @click="compeleteTask(index)"> <i class="fas fa-check"></i> </button>
-                </div>
+              <div>
+                  <p v-if="!task.isEditing" :class="{ completed: task.isComplete}">
+                   Task {{ task.text }} <br>
+                   Schedule on: {{task.date}}
+                  </p>
+                    <input type="text" v-else v-model="task.text" />
+                  <div class="buttons">
+                    <!-- editTask toggle the isEditing mode-->
+                  <button @click="editTask(index)">
+                  <i :class="task.isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
+                  </button>
+                    <button @click="deleteTask(index)"> <i class="fas fa-trash"></i> </button>
+                    <button @click="compeleteTask(index)"> <i class="fas fa-check"></i> </button>
+                    <button @click="openCalendar(index)" ><i class="fas fa-calendar"></i></button>
+                  </div>
+                    
+                    <!-- CalenderModel will listen (date) and apply method (updateDate)  -->
+                    <CalenderModel v-if="showCalendar && selectedTaskIndex !== null" @close="showCalendar = false" @date="updateDate" />
+                   
+              </div>
             </li>
+                
           </ul>
+          
         </div>
         <div v-else class="newtask">
           <h1>Task list is empty!!</h1>
         </div>
          <div v-if="newtask.length > 0" class="btn">
-          <button @click="deleteAll(index)"> Delete all  </button>
-          <button @click="completeAll(index)"> Complete all </button>
+          <button @click="deleteAll()"> Delete all  </button>
+          <button @click="completeAll()">Complete All</button>
           </div>
       </div>
     </div>
@@ -47,22 +61,45 @@
 
 <script>
 
+import CalenderModel from './CalenderModel.vue';
 export default {
   
   name: "AddTask",
+  components:{
+    CalenderModel,
+  },
   data() {
     return {
       text: "",
       newtask: [], 
+      showCalendar: false,
+      selectedDate: null,
+      selectedTaskIndex:null,
     };
   },
   methods: {
-    addtask() {
-    if (this.text.trim() !== "") {
-      this.newtask.push({ text: this.text, isEditing: false });
-      this.text = "";
-    }
-  },
+  addTask() {
+  if (this.text.trim() === "") {
+    alert("Add your Task!!!");
+    return;
+  }
+
+  if (!this.selectedDate || this.selectedDate.trim() === "") {
+    alert("Schedule your Task!!!!!");
+    return;
+  }
+
+  this.newtask.push({ text: this.text, isEditing: false, date: this.selectedDate });
+  this.text = ""; 
+  this.selectedDate="";
+},
+/*AddTask(){
+if (this.text.trim() !== "") {
+    this.newtask.push({ text: this.text, isEditing: false });
+    this.text = ""; 
+  }
+},
+*/
   editTask(index) {
     this.newtask[index].isEditing = !this.newtask[index].isEditing;
   },
@@ -74,15 +111,51 @@ export default {
   },
    deleteAll() {
     this.newtask = [];//reset the array
-},
+},//to mark all task as complete
   completeAll() {
-    const allCompleted = this.newtask.every(task => task.isComplete);
+    const status=this.newtask.every(task=>task.isComplete)
     this.newtask.forEach(task => {
-        task.isComplete = !allCompleted;
-    });
+        task.isComplete = !status;
+    });  
 },
-}
-  
+/*
+updateDate(date, index) {
+  { 
+  //setting selectedDate to the object value that is passed durig function call. 
+    this.newtask[index].date = date; 
+    //showdate true to make <p> visible
+    this.selectedDate=date;
+    this.showDate = true;
+    
+  }
+},*/
+setDate(date) {
+  console.log("Received date:", date); // Debugging output
+
+  if (!date) {
+    alert("No date selected!");
+    return;
+  }
+
+  this.selectedDate = date;
+  console.log("Updated selectedDate:", this.selectedDate); // Should not be undefined
+
+  this.showCalendar = false;
+},
+openCalendar(index)
+{
+  this.selectedTaskIndex=index;
+  this.showCalendar=true;
+},
+updateDate(date){
+  if (this.selectedTaskIndex !== null) {
+    this.newtask[this.selectedTaskIndex].date = date;
+    this.showCalendar = false;
+    this.selectedTaskIndex = null; // Reset after use
+  }
+},
+
+}  
 };
 </script>
 
@@ -111,10 +184,10 @@ export default {
   color: #e64a90;
 }
 
-.add-task textarea {
+.add-task input {
   width: 100%;
   max-width: 400px;
-  height: 400px;
+  height: 200px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -188,24 +261,23 @@ h1{
 }
 
 .newtask p{
-  width: 65%;
+  width: 100%;
   max-width: 350px;
   font-size: 16px;
   color: #0f0b0d;
-  padding: 10px;
   border-radius: 8px;
   height: auto;
   font-weight: 400px;
   
 }
-.newtask textarea {
+.newtask input {
   width: 65%;
   max-width: 350px;
   font-size: 16px;
   color: #0f0b0d;
   padding: 10px;
   border-radius: 8px;
-  height: 300px;
+  height: 70px;
 }
 
 .newtask p {
@@ -238,7 +310,7 @@ h1{
 }
 .newtask .completed {
   text-decoration: line-through;
-  color: gray;
+  color: rgb(149, 145, 145);
 }
 .btn button{
   margin-top: 20px;
