@@ -77,22 +77,45 @@ export default {
       selectedTaskIndex:null,
     };
   },
+   mounted() {
+    this.loadTasks(); 
+  },
+
   methods: {
-  addTask() {
-  if (this.text.trim() === "") {
-    alert("Add your Task!!!");
-    return;
-  }
+    
+    addTask() {
+      if (this.text.trim() === "") {
+        alert("Add your Task!!!");
+        return;
+      }
 
-  if (!this.selectedDate || this.selectedDate.trim() === "") {
-    alert("Schedule your Task!!!!!");
-    return;
-  }
+      if (!this.selectedDate || this.selectedDate.trim() === "") {
+        alert("Schedule your Task!!!!!");
+        return;
+      }
 
-  this.newtask.push({ text: this.text, isEditing: false, date: this.selectedDate });
-  this.text = ""; 
-  this.selectedDate="";
-},
+
+      const task = { text: this.text, date: this.selectedDate, isEditing: false };
+
+
+      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+   
+      tasks.push(task);
+
+   
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+
+
+      this.newtask.push(task);
+      this.text = "";
+      this.selectedDate = "";
+    },
+
+
+    loadTasks() {
+      this.newtask = JSON.parse(localStorage.getItem("tasks")) || [];
+    },
 /*AddTask(){
 if (this.text.trim() !== "") {
     this.newtask.push({ text: this.text, isEditing: false });
@@ -102,15 +125,18 @@ if (this.text.trim() !== "") {
 */
   editTask(index) {
     this.newtask[index].isEditing = !this.newtask[index].isEditing;
+     localStorage.setItem("tasks", JSON.stringify(this.newtask));
   },
   deleteTask(index) {
     this.newtask.splice(index, 1);
+     localStorage.setItem("tasks", JSON.stringify(this.newtask));
   },
   compeleteTask(index){
     this.newtask[index].isComplete = !this.newtask[index].isComplete;
   },
    deleteAll() {
     this.newtask = [];//reset the array
+     localStorage.setItem("tasks", JSON.stringify(this.newtask));
 },//to mark all task as complete
   completeAll() {
     const status=this.newtask.every(task=>task.isComplete)
@@ -151,7 +177,8 @@ updateDate(date){
   if (this.selectedTaskIndex !== null) {
     this.newtask[this.selectedTaskIndex].date = date;
     this.showCalendar = false;
-    this.selectedTaskIndex = null; // Reset after use
+    this.selectedTaskIndex = null; 
+    localStorage.setItem("tasks", JSON.stringify(this.newtask));
   }
 },
 

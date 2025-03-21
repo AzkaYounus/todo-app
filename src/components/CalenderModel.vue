@@ -7,7 +7,6 @@
 
       <button @click="ConfirmDate">Confirm</button>
       <button @click="closeCalender">Close</button>
-
     </div>
   </div>
 </template>
@@ -16,40 +15,20 @@
 export default {
   data() {
     return {
-      selectedDate: null
+      selectedDate:null, 
     };
   },
-  methods:{
-     //just to close calendar 
-  closeCalender(){
-
-    this.$emit('close')
+  methods: {
+    ConfirmDate() {
+      this.$emit("date", this.selectedDate); 
+      this.$emit("close");
     },
-
-  ConfirmDate() {
-    if(!this.selectedDate){
-      alert("select date!!!!!!!!")
-      return
-    }
-  const selected = new Date(this.selectedDate);
-  const today = new Date();
-  
-  // Set time to midnight for accurate comparison
-  today.setHours(0, 0, 0, 0);
-  selected.setHours(0, 0, 0, 0);
-
-  if (selected < today) {
-    alert("Selected date cannot be in the past!");
-    return;
-  }
-
-  this.$emit("date", this.selectedDate);
-  this.$emit("close");
-}
+    closeCalender() {
+      this.$emit("close"); 
+    },
   },
 };
 </script>
-
 <style>
 
 .modal {
@@ -101,4 +80,3 @@ button:hover {
 
 }
 </style>
-
