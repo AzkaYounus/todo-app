@@ -172,8 +172,9 @@ openCalender(index)
 updateDate(date){
   if (this.selectedTaskIndex !== null) {
     this.newtask[this.selectedTaskIndex].date = date;
-    this.updateCalender = false;
+    this.newtask[this.selectedTaskIndex].updateCalender = false;
     this.selectedTaskIndex = null; 
+    
     localStorage.setItem("tasks", JSON.stringify(this.newtask));
     this.selectedDate=null;
   }
