@@ -4,6 +4,7 @@
       <h2>Select a Date</h2>
       <input type="date" v-model="selectedDate" />
       <p>Selected Date: {{ selectedDate }}</p>
+      <p v-if="displaydate">Displaydate:{{Previousdate}}</p>
 
       <button @click="ConfirmDate">Confirm</button>
       <button @click="closeCalender">Close</button>
@@ -13,22 +14,36 @@
 
 <script>
 export default {
-  props: ["displaydate", "test"],
+   name: 'CalenderModel',
+  props: ["displaydate"],
   data() {
     return {
-      selectedDate: null,
+      selectedDate: "", 
     };
+  },
+computed: {
+    Previousdate: {
+
+      get() {
+        return this.displaydate
+      },
+
+      set(newValue) {
+        this.displaydate = newValue;
+      }
+    }
   },
   methods: {
     ConfirmDate() {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); 
+      today.setHours(0, 0, 0, 0);
 
       const selectedDate = new Date(this.selectedDate);
       selectedDate.setHours(0, 0, 0, 0);
+
       if (selectedDate < today) {
         alert("Selected date is in the past. Please choose a valid date.");
-        this.selectedDate=null;
+        this.selectedDate = null;
         return;
       }
 
@@ -40,6 +55,7 @@ export default {
     },
   },
 };
+
 </script>
 <style>
 .modal {

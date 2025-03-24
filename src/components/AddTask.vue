@@ -6,8 +6,8 @@
         <label> Add Your Task</label>
         <input type="text" v-model="text" placeholder="Add your Task"/>
         <!--<p>{{ text }}</p>-->
-         <button @click="setCalendar = true">Select date</button>
-          <CalenderModel v-if="setCalendar" @close="setCalendar = false" @date="setDate" />
+         <button @click="setCalender = true">Select date</button>
+          <CalenderModel v-if="setCalender" @close="setCalender = false" @date="setDate" />
           <p v-if="selectedDate">Selected Date: {{ selectedDate }}</p>
          <p v-else>Schedule your Task</p>
         <button type="submit" @click="addTask()">Add Task</button>
@@ -19,7 +19,7 @@
     <div class="right">
       <div class="edit-task">
         <h1>Manage your task</h1>
-        <Test :foo="selectedDate" />
+
 
         <!--<p>{{ newtask }}</p>-->
 
@@ -39,13 +39,12 @@
                   </button>
                     <button @click="deleteTask(index)"> <i class="fas fa-trash"></i> </button>
                     <button @click="compeleteTask(index)"> <i class="fas fa-check"></i> </button>
-                    <button @click="openCalendar(index)" ><i class="fas fa-calendar"></i></button>
+                    <button @click="openCalender(index)" ><i class="fas fa-calendar"></i></button>
                   </div>
                     
                     <!-- CalenderModel will listen (date) and apply method (updateDate)  -->
-                   <CalenderModel v-if="task.updateCalendar" @close="task.updateCalendar = false" @date="updateDate"/>
-                    <!--<CalenderModel v-if="updateCalendar" @close="updateCalendar = false" @date="updateDate" />-->
-              </div>
+                   <CalenderModel v-if="task.updateCalender" :displaydate="selectedDate" @date="updateDate" @close="task.updateCalender = false"/>        
+      </div>
             </li>
                 
           </ul>
@@ -65,13 +64,13 @@
 
 <script>
 
-import CalenderModel from './CalenderModel.vue';
-import Test from './Test';
+import CalenderModel from './CalenderModel.vue'
+
 export default {
   
   name: "AddTask",
   components:{
-    CalenderModel, Test
+    CalenderModel
   },
   data() {
     return {
@@ -79,7 +78,8 @@ export default {
       newtask: [], 
       selectedDate: null,
       selectedTaskIndex:null,
-      setCalendar:false,
+      setCalender:false,
+     updateCalender:false,
     };
   },
    mounted() {
@@ -100,7 +100,7 @@ export default {
       }
 
 
-      const task = { text: this.text, date: this.selectedDate, isEditing: false , updateCalendar: false};
+      const task = { text: this.text, date: this.selectedDate, isEditing: false , updateCalender: false};
 
 
       let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -156,22 +156,26 @@ setDate(date) {
   this.selectedDate = date;
   console.log("Updated selectedDate:", this.selectedDate); 
 
-  this.setCalendar = false;
+  this.setCalender = false;
 },
 
-openCalendar(index)
+openCalender(index)
 {
-  console.log("updateCalendar",this.updateCalendar)
   this.selectedTaskIndex=index;
-  this.newtask[index].updateCalendar = true;
-  
+  console.log("updateCalender",this.updateCalender)
+  this.newtask[index].updateCalender = true;
+  console.log("updateCalender after true",this.updateCalender)
+
+  this.selectedDate = this.newtask[index].date;
+  console.log("The previously selected date", this.selectedDate)
 },
 updateDate(date){
   if (this.selectedTaskIndex !== null) {
     this.newtask[this.selectedTaskIndex].date = date;
-    this.updateCalendar = false;
+    this.updateCalender = false;
     this.selectedTaskIndex = null; 
     localStorage.setItem("tasks", JSON.stringify(this.newtask));
+    this.selectedDate=null;
   }
 },
   }
