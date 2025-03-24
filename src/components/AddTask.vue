@@ -6,17 +6,21 @@
         <label> Add Your Task</label>
         <input type="text" v-model="text" placeholder="Add your Task"/>
         <!--<p>{{ text }}</p>-->
-         <button @click="showCalendar = true">Select date</button>
-          <CalenderModel v-if="showCalendar" @close="showCalendar = false" @date="setDate" />
+         <button @click="setCalendar = true">Select date</button>
+          <CalenderModel v-if="setCalendar" @close="setCalendar = false" @date="setDate" />
           <p v-if="selectedDate">Selected Date: {{ selectedDate }}</p>
          <p v-else>Schedule your Task</p>
-        <button @click="addTask()">Add Task</button>
+        <button type="submit" @click="addTask()">Add Task</button>
+        
+
       </form>
     </div>
 
     <div class="right">
       <div class="edit-task">
         <h1>Manage your task</h1>
+        <Test :foo="selectedDate" />
+
         <!--<p>{{ newtask }}</p>-->
 
         <div v-if="newtask.length > 0" class="newtask">
@@ -39,8 +43,8 @@
                   </div>
                     
                     <!-- CalenderModel will listen (date) and apply method (updateDate)  -->
-                    <CalenderModel v-if="showCalendar && selectedTaskIndex !== null" @close="showCalendar = false" @date="updateDate" />
-                   
+                   <CalenderModel v-if="task.updateCalendar" @close="task.updateCalendar = false" @date="updateDate"/>
+                    <!--<CalenderModel v-if="updateCalendar" @close="updateCalendar = false" @date="updateDate" />-->
               </div>
             </li>
                 
@@ -62,19 +66,20 @@
 <script>
 
 import CalenderModel from './CalenderModel.vue';
+import Test from './Test';
 export default {
   
   name: "AddTask",
   components:{
-    CalenderModel,
+    CalenderModel, Test
   },
   data() {
     return {
       text: "",
       newtask: [], 
-      showCalendar: false,
       selectedDate: null,
       selectedTaskIndex:null,
+      setCalendar:false,
     };
   },
    mounted() {
@@ -95,7 +100,7 @@ export default {
       }
 
 
-      const task = { text: this.text, date: this.selectedDate, isEditing: false };
+      const task = { text: this.text, date: this.selectedDate, isEditing: false , updateCalendar: false};
 
 
       let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -108,6 +113,7 @@ export default {
 
 
       this.newtask.push(task);
+      console.log("Your task is added!!")
       this.text = "";
       this.selectedDate = "";
     },
@@ -116,13 +122,7 @@ export default {
     loadTasks() {
       this.newtask = JSON.parse(localStorage.getItem("tasks")) || [];
     },
-/*AddTask(){
-if (this.text.trim() !== "") {
-    this.newtask.push({ text: this.text, isEditing: false });
-    this.text = ""; 
-  }
-},
-*/
+
   editTask(index) {
     this.newtask[index].isEditing = !this.newtask[index].isEditing;
      localStorage.setItem("tasks", JSON.stringify(this.newtask));
@@ -144,19 +144,9 @@ if (this.text.trim() !== "") {
         task.isComplete = !status;
     });  
 },
-/*
-updateDate(date, index) {
-  { 
-  //setting selectedDate to the object value that is passed durig function call. 
-    this.newtask[index].date = date; 
-    //showdate true to make <p> visible
-    this.selectedDate=date;
-    this.showDate = true;
-    
-  }
-},*/
+
 setDate(date) {
-  console.log("Received date:", date); // Debugging output
+  console.log("Received date:", date); 
 
   if (!date) {
     alert("No date selected!");
@@ -164,25 +154,27 @@ setDate(date) {
   }
 
   this.selectedDate = date;
-  console.log("Updated selectedDate:", this.selectedDate); // Should not be undefined
+  console.log("Updated selectedDate:", this.selectedDate); 
 
-  this.showCalendar = false;
+  this.setCalendar = false;
 },
+
 openCalendar(index)
 {
+  console.log("updateCalendar",this.updateCalendar)
   this.selectedTaskIndex=index;
-  this.showCalendar=true;
+  this.newtask[index].updateCalendar = true;
+  
 },
 updateDate(date){
   if (this.selectedTaskIndex !== null) {
     this.newtask[this.selectedTaskIndex].date = date;
-    this.showCalendar = false;
+    this.updateCalendar = false;
     this.selectedTaskIndex = null; 
     localStorage.setItem("tasks", JSON.stringify(this.newtask));
   }
 },
-
-}  
+  }
 };
 </script>
 
