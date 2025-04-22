@@ -4,13 +4,20 @@
     <div class="left">
       <form @submit.prevent="addtask" class="add-task"> 
         <label> Add Your Task</label>
-        <input type="text" v-model="text" placeholder="Add your Task"/>
+
+
+        <input  type="text" v-model="text" placeholder="Add your Task"/>
+
+       
+
         <!--<p>{{ text }}</p>-->
          <button @click="setCalender = true">Select date</button>
-          <CalenderModel v-if="setCalender" @close="setCalender = false" @date="setDate" />
+          <CalenderModel v-if="setCalender" @close="setCalender = false"  @date="setDate" />
           <p v-if="selectedDate">Selected Date: {{ selectedDate }}</p>
-         <p v-else>Schedule your Task</p>
-        <button type="submit" @click="addTask()">Add Task</button>
+          <p v-else>Schedule your Task</p>
+
+      <button type="submit" @click="addTask()">Add Task</button> 
+     
         
 
       </form>
@@ -27,7 +34,7 @@
           <ul>
             <li v-for="(task, index) in newtask" :key="index">
               <div>
-                  <p v-if="!task.isEditing" :class="{ completed: task.isComplete}">
+                  <p v-if="!task.isEditing" :class="{ completed:task.is_complete}">
                    Task {{ task.text }} <br>
                    Schedule on: {{task.date}}
                   </p>
@@ -38,7 +45,7 @@
                   <i :class="task.isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
                   </button>
                     <button @click="deleteTask(index)"> <i class="fas fa-trash"></i> </button>
-                    <button @click="compeleteTask(index)"> <i class="fas fa-check"></i> </button>
+                    <button @click="completeTask(index)"> <i class="fas fa-check"></i> </button>
                     <button @click="openCalender(index)" ><i class="fas fa-calendar"></i></button>
                   </div>
                     
@@ -65,7 +72,7 @@
 <script>
 
 import CalenderModel from './CalenderModel.vue'
-
+import axios from 'axios'
 export default {
   
   name: "AddTask",
@@ -79,16 +86,21 @@ export default {
       selectedDate: null,
       selectedTaskIndex:null,
       setCalender:false,
-     updateCalender:false,
+      updateCalender:false,
     };
   },
    mounted() {
-    this.loadTasks(); 
+    this.fetchTasks(); 
   },
 
   methods: {
+
+
+    /*********  add task **************/
     
-    addTask() {
+    
+    async addTask() {
+  
       if (this.text.trim() === "") {
         alert("Add your Task!!!");
         return;
@@ -98,53 +110,163 @@ export default {
         alert("Schedule your Task!!!!!");
         return;
       }
+  
+    try {
+    const payload = {
+      text: this.text,
+      date: this.selectedDate
+    };
 
+    const response = await axios.post('http://localhost:8000/api/tasks', payload);
 
-      const task = { text: this.text, date: this.selectedDate, isEditing: false , updateCalender: false};
+    this.newtask.push(response.data);
+    this.text = "";
+    this.selectedDate = "";
 
+  } catch (error) {
+    console.error("Error adding task:", error);
+    this.error = "Failed to add task. Try again.";
+  }
 
-      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-   
-      tasks.push(task);
-
-   
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-
-
-      this.newtask.push(task);
-      console.log("Your task is added!!")
-      this.text = "";
-      this.selectedDate = "";
     },
 
 
-    loadTasks() {
-      this.newtask = JSON.parse(localStorage.getItem("tasks")) || [];
+/***************  loading all tasks  ***************/
+
+
+async fetchTasks() {
+      try {
+        const response = await axios.get('http://localhost:8000/api/tasks');
+        this.newtask = response.data;
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
     },
 
-  editTask(index) {
-    this.newtask[index].isEditing = !this.newtask[index].isEditing;
-     localStorage.setItem("tasks", JSON.stringify(this.newtask));
-  },
-  deleteTask(index) {
-    this.newtask.splice(index, 1);
-     localStorage.setItem("tasks", JSON.stringify(this.newtask));
-  },
-  compeleteTask(index){
-    this.newtask[index].isComplete = !this.newtask[index].isComplete;
-  },
-   deleteAll() {
-    this.newtask = [];//reset the array
-     localStorage.setItem("tasks", JSON.stringify(this.newtask));
-},//to mark all task as complete
-  completeAll() {
-    const status=this.newtask.every(task=>task.isComplete)
-    this.newtask.forEach(task => {
-        task.isComplete = !status;
-    });  
+
+/*********  edit task  ***************/
+
+
+async editTask(index) {
+  const task = this.newtask[index];
+
+  // If currently in edit mode, save changes
+  if (task.isEditing) {
+    // Client-side validation
+    if (!task.text || task.text.trim() === "") {
+      this.error = "Add your Task!";
+      return;
+    }
+
+    this.error = "";
+
+    try {
+      const payload = {
+        text: task.text
+      };
+
+      const response = await axios.put(`http://localhost:8000/api/tasks/${task.id}`, payload);
+
+      // Update local task with response data and exit edit mode
+      this.newtask[index] = {
+        ...response.data,
+        isEditing: false
+      };
+
+    } catch (error) {
+      console.error("Error editing task:", error);
+      this.error = "Failed to edit task. Try again.";
+    }
+  } else {
+    // Enter edit mode
+    this.newtask[index].isEditing = true;
+  }
 },
 
+
+/********** delete specific task */
+
+async deleteTask(index) {
+  const task = this.newtask[index];
+
+  try {
+    await axios.delete(`http://localhost:8000/api/tasks/${task.id}`);
+    this.newtask.splice(index, 1); // Remove task from local array
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    this.error = "Failed to delete task. Try again.";
+  }
+},
+
+
+/*************** complete task  ***************/
+
+
+async completeTask(index) {
+  const task = this.newtask[index];
+  const newStatus = !task.is_complete;
+
+  try {
+    const payload = {
+      is_complete: newStatus
+    };
+
+    const response = await axios.put(`http://localhost:8000/api/tasks/${task.id}`, payload);
+
+    // Update local task with response data and new status
+    this.newtask[index] = {
+      ...response.data,
+      is_complete: newStatus
+    };
+
+  } catch (error) {
+    console.error("Error editing task:", error);
+    this.error = "Failed to edit task. Try again.";
+  }
+},
+
+/********* delete all  ***************/
+ 
+
+async deleteAll() {
+  if (!confirm("Are you sure you want to delete all tasks?")) {
+    return;
+  }
+
+  try {
+    await axios.delete('http://localhost:8000/api/delete-all');
+    this.newtask = [];
+  } catch (error) {
+    console.error("Error deleting all tasks:", error);
+    this.error = "Failed to delete all tasks. Please try again.";
+  }
+},
+
+
+/******** complete all  ***************/
+
+
+async completeAll() {
+  const allComplete = this.newtask.every(task => task.is_complete);
+  const newStatus = !allComplete;
+
+  try {
+    await axios.put('http://localhost:8000/api/complete-all', {
+      is_complete: newStatus
+    });
+
+    // Update local task list
+    this.newtask = this.newtask.map(task => ({
+      ...task,
+      is_complete: newStatus
+    }));
+
+  } catch (error) {
+    console.error("Error updating all tasks:", error);
+    this.error = "Failed to update all tasks. Please try again.";
+  }
+},
+// just to set (setCalender=false) , and some console.log 
 setDate(date) {
   console.log("Received date:", date); 
 
@@ -162,23 +284,31 @@ setDate(date) {
 openCalender(index)
 {
   this.selectedTaskIndex=index;
-  console.log("updateCalender",this.updateCalender)
+ 
   this.newtask[index].updateCalender = true;
-  console.log("updateCalender after true",this.updateCalender)
 
   this.selectedDate = this.newtask[index].date;
-  console.log("The previously selected date", this.selectedDate)
+ 
 },
-updateDate(date){
+
+async updateDate(date) {
   if (this.selectedTaskIndex !== null) {
-    this.newtask[this.selectedTaskIndex].date = date;
-    this.newtask[this.selectedTaskIndex].updateCalender = false;
-    this.selectedTaskIndex = null; 
-    
-    localStorage.setItem("tasks", JSON.stringify(this.newtask));
-    this.selectedDate=null;
+    const task = this.newtask[this.selectedTaskIndex];
+
+    try {
+      const response = await axios.put(`http://localhost:8000/api/tasks/${task.id}`, payload);
+
+      this.newtask[this.selectedTaskIndex].date = response.data.date;
+      this.newtask[this.selectedTaskIndex].updateCalender = false;
+
+      this.selectedTaskIndex = null;
+
+    } catch (error) {
+      console.error("Error updating task date:", error);
+      this.error = "Failed to update task date. Try again.";
+    }
   }
-},
+}
   }
 };
 </script>

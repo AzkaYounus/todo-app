@@ -8,6 +8,13 @@
           Get Started
         </button>
       </router-link>
+      
+       <router-link to ="/test">
+        <button>
+          Test
+        </button>
+      </router-link>
+      
     </div>
 
 </template>
